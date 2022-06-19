@@ -1,12 +1,14 @@
 import time
+import threading
 import numpy as np
 import os
 # Paths to the CUDA Toolkit and CUDNN library
-os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/bin")
-os.add_dll_directory("C:/Program Files/NVIDIA/CUDNN/v8.1/bin")
+#os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/bin")
+#os.add_dll_directory("C:/Program Files/NVIDIA/CUDNN/v8.1/bin")
 import tensorflow as tf
 import cv2
 import PySimpleGUI as psg
+from playsound import playsound
 # Object detection imports from the Tensorflow module
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as vis_util
@@ -58,18 +60,19 @@ def computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType):
             #           image         text                       text position                     text font            size       color   line width
             if classes[0][i] == 2 or classes[0][i] == 3 or classes[0][i] == 4 or classes[0][i] == 6 or classes[0][i] == 7 or classes[0][i] == 8:
             # if it's a bicycle,       a car,              a motorcycle,           a bus,              a train                 or a truck
-                if roadType == 'highway':
-                    if 0.45 < mid_x < 0.55:  # if the object is in the ego vehicle path
-                        if aproxDist <= 0.80:
-                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-                if roadType == 'normal':
-                    if 0.4 < mid_x < 0.6:  # if the object is in the ego vehicle path
-                        if aproxDist <= 0.60:
-                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-                if roadType == 'city':
-                    if 0.3 < mid_x < 0.7:  # if the object is in the ego vehicle path
-                        if aproxDist <= 0.5:
-                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+                if roadType == 'highway':      # verify type of road
+                    if 0.45 < mid_x < 0.55:    # if the object is in the ego vehicle path
+                        if aproxDist <= 0.80:  # if the aproximate distance is smaller than the threshold
+                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)  # send warning
+                if roadType == 'normal':       # verify type of road
+                    if 0.4 < mid_x < 0.6:      # if the object is in the ego vehicle path
+                        if aproxDist <= 0.60:  # if the aproximate distance is smaller than the threshold
+                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)  # send warning
+                            #playsound('alarm.mp3')
+                if roadType == 'city':         # verify type of road
+                    if 0.3 < mid_x < 0.7:      # if the object is in the ego vehicle path
+                        if aproxDist <= 0.5:   # if the aproximate distance is smaller than the threshold
+                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)  # send warning
             elif classes[0][i] == 1 :  # if it's a pedestrian
                 if 0.2 < mid_x < 0.8:  # if the object is in the ego vehicle path
                     cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
@@ -119,12 +122,18 @@ def detection(input, roadType):
                     line_thickness=4)
 
                 # Compute distances to TPs and send warnings
-                computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType)
+                #computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType)
+                t = threading.Thread(target=computeDistanceAndSendWarning, args=[frame, boxes, classes, scores, roadType])
+                t.start()
+                t.join()
 
                 currentFrameTime = time.time()
                 fps = str(int(1/(currentFrameTime-lastFrameTime)))
                 lastFrameTime = currentFrameTime
+
+                print(time.time()-last_time)
                 last_time = time.time()
+
                 cv2.putText(frame, fps, (7, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
                 cv2.imshow('Traffic Participants Detection - Press Q to stop the detection',
                            cv2.resize(frame, (950, 600)))
