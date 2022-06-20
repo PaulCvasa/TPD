@@ -23,6 +23,7 @@ the GPU instead of the CPU.
 -- Getting Started
 
 In order to install the TPD application, you will need to follow this steps in order:
+
 • Install Python 3.9.13 from this link, scroll at the end of the page and select
 the Windows installer (64-bit) or Windows installer (32-bit) depending on
 your type of system:
