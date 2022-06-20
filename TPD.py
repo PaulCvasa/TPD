@@ -91,61 +91,66 @@ def detection(input, roadType):
     currentFrameTime = 0
     with detection_graph.as_default():
         # Start TensorFlow session
-        with tf.compat.v1.Session(graph=detection_graph,
-                                  config=tf.compat.v1.ConfigProto(gpu_options=gpuOptions)) as sess:
-            while input.isOpened():
+        with tf.compat.v1.Session(graph=detection_graph, config=tf.compat.v1.ConfigProto(gpu_options=gpuOptions)) as sess:
+            while True:
                 success, frame = input.read()
-                #print('loop took {} seconds'.format(time.time() - last_time))
-                # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-                expandedFrame = np.expand_dims(frame, axis=0)
-                tensorFrame = detection_graph.get_tensor_by_name('image_tensor:0')
-                # Each box represents a part of the image where a particular object was detected.
-                boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
-                # Each score represent how level of confidence for each of the objects.
-                # Score is shown on the result image, together with the class label.
-                scores = detection_graph.get_tensor_by_name('detection_scores:0')
-                classes = detection_graph.get_tensor_by_name('detection_classes:0')
-                num_detections = detection_graph.get_tensor_by_name('num_detections:0')
-                # Actual detection.
-                (boxes, scores, classes, num_detections) = sess.run(
-                    [boxes, scores, classes, num_detections],
-                    feed_dict={tensorFrame: expandedFrame})
-                # Visualization of the results of a detection.
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                    frame,
-                    np.squeeze(boxes),
-                    np.squeeze(classes).astype(np.int32),
-                    np.squeeze(scores),
-                    category_index,
-                    use_normalized_coordinates=True,
-                    min_score_thresh=.5,
-                    line_thickness=4)
+                while success:
+                    # print('loop took {} seconds'.format(time.time() - last_time))
+                    # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+                    expandedFrame = np.expand_dims(frame, axis=0)
+                    tensorFrame = detection_graph.get_tensor_by_name('image_tensor:0')
+                    # Each box represents a part of the image where a particular object was detected.
+                    boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+                    # Each score represent how level of confidence for each of the objects.
+                    # Score is shown on the result image, together with the class label.
+                    scores = detection_graph.get_tensor_by_name('detection_scores:0')
+                    classes = detection_graph.get_tensor_by_name('detection_classes:0')
+                    num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+                    # Actual detection.
+                    (boxes, scores, classes, num_detections) = sess.run(
+                        [boxes, scores, classes, num_detections],
+                        feed_dict={tensorFrame: expandedFrame})
+                    # Visualization of the results of a detection.
+                    vis_util.visualize_boxes_and_labels_on_image_array(
+                        frame,
+                        np.squeeze(boxes),
+                        np.squeeze(classes).astype(np.int32),
+                        np.squeeze(scores),
+                        category_index,
+                        use_normalized_coordinates=True,
+                        min_score_thresh=.5,
+                        line_thickness=4)
 
-                # Compute distances to TPs and send warnings
-                #computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType)
-                t = threading.Thread(target=computeDistanceAndSendWarning, args=[frame, boxes, classes, scores, roadType])
-                t.start()
-                t.join()
+                    # Compute distances to TPs and send warnings
+                    # computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType)
+                    t = threading.Thread(target=computeDistanceAndSendWarning,
+                                         args=[frame, boxes, classes, scores, roadType])
+                    t.start()
+                    t.join()
 
-                currentFrameTime = time.time()
-                fps = str(int(1/(currentFrameTime-lastFrameTime)))
-                lastFrameTime = currentFrameTime
+                    currentFrameTime = time.time()
+                    fps = str(int(1 / (currentFrameTime - lastFrameTime)))
+                    lastFrameTime = currentFrameTime
 
-                #print(time.time()-last_time)
-                #last_time = time.time()
+                    # print(time.time()-last_time)
+                    # last_time = time.time()
 
-                cv2.putText(frame, fps, (7, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
-                cv2.imshow('Traffic Participants Detection - Press Q to stop the detection',
-                           cv2.resize(frame, (950, 600)))
+                    cv2.putText(frame, fps, (7, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
+                    cv2.imshow('Traffic Participants Detection - Press Q to stop the detection',
+                               cv2.resize(frame, (950, 600)))
 
-                if cv2.waitKey(25) & 0xFF == ord('q'):
-                    cv2.destroyAllWindows()
-                    break
+                    if cv2.waitKey(25) & 0xFF == ord('q'):
+                        cv2.destroyAllWindows()
+                        break
+                    success, frame = input.read()
+                break
+            input.release()
+            cv2.destroyAllWindows()
 
 
 def main():
     videoInput = cv2.VideoCapture(0)  # 'testRecs/tpd2.mp4'
-    testInput = cv2.VideoCapture('testRecs/mymovieTrim.mp4')
+    testInput = cv2.VideoCapture('testRecs/normal.mp4')
     roadType = 'normal'
 
     psg.theme("Dark")
