@@ -51,31 +51,31 @@ def modelSetup():
 
 
 def computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType):
-    for i, b in enumerate(boxes[0]):
+    for i, b in enumerate(boxes[0]):  # iterate through detection boxes
         if scores[0][i] > 0.5:  # if the confidence level is bigger than 50%
-            mid_x = (boxes[0][i][1] + boxes[0][i][3]) / 2
-            mid_y = (boxes[0][i][0] + boxes[0][i][2]) / 2
-            aproxDist = round((1 - (boxes[0][i][3] - boxes[0][i][1])) ** 4, 1)  # the power can be tweaked, to affect granularity
-            cv2.putText(frame, '{}'.format(aproxDist), (int(mid_x * 1300), int(mid_y * 550)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)  # show aproximate distance
-            #           image         text                       text position                     text font            size       color   line width
-            if classes[0][i] == 2 or classes[0][i] == 3 or classes[0][i] == 4 or classes[0][i] == 6 or classes[0][i] == 7 or classes[0][i] == 8:
+            # we subtract the width difference from 1, so the value will be towards 0 when the object is closer and to 1 when it's far away
+            aproxDist = round((1 - (boxes[0][i][3] - boxes[0][i][1])) ** 4, 1)  # distance computed by detection width, the power can be tweaked to affect granularity
+            middleX = (boxes[0][i][1] + boxes[0][i][3]) / 2  # middle of the X coord of detected object
+            middleY = (boxes[0][i][0] + boxes[0][i][2]) / 2  # middle of the Y coord of detected object
+            #           image         text                          text position                     text font            size       color   line width
+            cv2.putText(frame, '{}'.format(aproxDist), (int(middleX * 1300), int(middleY * 550)), cv2.FONT_ITALIC, 0.7, (255, 255, 255), 2)  # show aproximate distance
             # if it's a bicycle,       a car,              a motorcycle,           a bus,              a train                 or a truck
+            if classes[0][i] == 2 or classes[0][i] == 3 or classes[0][i] == 4 or classes[0][i] == 6 or classes[0][i] == 7 or classes[0][i] == 8:
                 if roadType == 'highway':      # verify type of road
-                    if 0.45 < mid_x < 0.55:    # if the object is in the ego vehicle path
+                    if 0.45 < middleX < 0.55:    # if the object is in the ego vehicle path
                         if aproxDist <= 0.80:  # if the aproximate distance is smaller than the threshold
-                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)  # send warning
+                            cv2.putText(frame, '!WARNING!', (int(middleX * 1280), int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)  # send warning
                 if roadType == 'normal':       # verify type of road
-                    if 0.4 < mid_x < 0.6:      # if the object is in the ego vehicle path
+                    if 0.4 < middleX < 0.6:      # if the object is in the ego vehicle path
                         if aproxDist <= 0.60:  # if the aproximate distance is smaller than the threshold
-                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)  # send warning
-                            #playsound('alarm.mp3')
+                            cv2.putText(frame, '!WARNING!', (int(middleX * 1280), int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)  # send warning
                 if roadType == 'city':         # verify type of road
-                    if 0.3 < mid_x < 0.7:      # if the object is in the ego vehicle path
-                        if aproxDist <= 0.5:   # if the aproximate distance is smaller than the threshold
-                            cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)  # send warning
+                    if 0.3 < middleX < 0.7:      # if the object is in the ego vehicle path
+                        if aproxDist < 0.5:   # if the aproximate distance is smaller than the threshold
+                            cv2.putText(frame, '!WARNING!', (int(middleX * 1280), int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)  # send warning
             elif classes[0][i] == 1 :  # if it's a pedestrian
-                if 0.2 < mid_x < 0.8:  # if the object is in the ego vehicle path
-                    cv2.putText(frame, '!WARNING!', (int(mid_x * 800) + 200, int(mid_y * 450) + 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+                if 0.2 < middleX < 0.8:  # if the object is in the ego vehicle path
+                    cv2.putText(frame, '!WARNING!', (int(middleX * 1280) , int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)
 
 
 def detection(input, roadType):
@@ -118,7 +118,7 @@ def detection(input, roadType):
                     np.squeeze(scores),
                     category_index,
                     use_normalized_coordinates=True,
-                    min_score_thresh=.35,
+                    min_score_thresh=.5,
                     line_thickness=4)
 
                 # Compute distances to TPs and send warnings
@@ -131,8 +131,8 @@ def detection(input, roadType):
                 fps = str(int(1/(currentFrameTime-lastFrameTime)))
                 lastFrameTime = currentFrameTime
 
-                print(time.time()-last_time)
-                last_time = time.time()
+                #print(time.time()-last_time)
+                #last_time = time.time()
 
                 cv2.putText(frame, fps, (7, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
                 cv2.imshow('Traffic Participants Detection - Press Q to stop the detection',
@@ -145,7 +145,7 @@ def detection(input, roadType):
 
 def main():
     videoInput = cv2.VideoCapture(0)  # 'testRecs/tpd2.mp4'
-    testInput = cv2.VideoCapture('testRecs/tpd1.mp4')
+    testInput = cv2.VideoCapture('testRecs/mymovieTrim.mp4')
     roadType = 'normal'
 
     psg.theme("Dark")
