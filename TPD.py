@@ -55,7 +55,7 @@ def computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType):
     for i, b in enumerate(boxes[0]):  # iterate through detection boxes
         if scores[0][i] > 0.4:  # if the confidence level is bigger than 50%
             # we subtract the width difference from 1, so the value will be towards 0 when the object is closer and to 1 when it's far away
-            aproxDist = round((1 - (boxes[0][i][3] - boxes[0][i][1])) ** 8, 2) * 20  # distance computed using detection box width, multiplied by 20 to convert in meters
+            approxDist = round((1 - (boxes[0][i][3] - boxes[0][i][1])) ** 8, 2) * 20  # distance computed using detection box width, multiplied by 20 to convert in meters
                                                                                      # the power can be tweaked to affect granularity
             middleX = (boxes[0][i][1] + boxes[0][i][3]) / 2  # middle of the X coord of detected object
             middleY = (boxes[0][i][0] + boxes[0][i][2]) / 2  # middle of the Y coord of detected object
@@ -63,22 +63,22 @@ def computeDistanceAndSendWarning(frame, boxes, classes, scores, roadType):
             # if it's a bicycle,       a car,              a motorcycle,           a bus,              a train                 or a truck
             if classes[0][i] == 2 or classes[0][i] == 3 or classes[0][i] == 4 or classes[0][i] == 6 or classes[0][i] == 7 or classes[0][i] == 8:
                 #           image         text                          text position                     text font            size       color   line width
-                cv2.putText(frame, '{:0.1f} m'.format(aproxDist), (int(middleX * 1300), int(middleY * 550)), cv2.FONT_ITALIC, 0.7, (255, 255, 255), 2)  # show aproximate distance
+                cv2.putText(frame, '{:0.1f} m'.format(approxDist), (int(middleX * 1300), int(middleY * 550)), cv2.FONT_ITALIC, 0.7, (255, 255, 255), 2)  # show approximate distance
                 if roadType == 'highway':      # verify type of road
                     if 0.45 < middleX < 0.55:    # if the object is in the ego vehicle path
-                        if aproxDist <= 13:  # if the aproximate distance is smaller than the threshold
+                        if approxDist <= 13:  # if the approximate distance is smaller than the threshold
                             cv2.putText(frame, '!WARNING!', (int(middleX * 1280), int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)  # send warning
                 if roadType == 'normal':       # verify type of road
                     if 0.4 < middleX < 0.6:      # if the object is in the ego vehicle path
-                        if aproxDist <= 9:  # if the aproximate distance is smaller than the threshold
+                        if approxDist <= 9:  # if the approximate distance is smaller than the threshold
                             cv2.putText(frame, '!WARNING!', (int(middleX * 1280), int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)  # send warning
                 if roadType == 'city':         # verify type of road
                     if 0.3 < middleX < 0.7:      # if the object is in the ego vehicle path
-                        if aproxDist < 6:   # if the aproximate distance is smaller than the threshold
+                        if approxDist < 6:   # if the approximate distance is smaller than the threshold
                             cv2.putText(frame, '!WARNING!', (int(middleX * 1280), int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)  # send warning
             elif classes[0][i] == 1 :  # if it's a pedestrian
                 #           image           text                                  text position                 text font         size       color   line width
-                cv2.putText(frame, '{:0.1f} m'.format((aproxDist)/3), (int(middleX * 1300), int(middleY * 550)), cv2.FONT_ITALIC, 0.7, (255, 255, 255), 2)  # show aproximate distance
+                cv2.putText(frame, '{:0.1f} m'.format(approxDist / 3), (int(middleX * 1300), int(middleY * 550)), cv2.FONT_ITALIC, 0.7, (255, 255, 255), 2)  # show approximate distance
                 if 0.2 < middleX < 0.8:  # if the object is in the ego vehicle path
                     cv2.putText(frame, '!WARNING!', (int(middleX * 1280) , int(middleY * 720)), cv2.FONT_ITALIC, 1.0, (0, 0, 255), 3)
 
@@ -248,7 +248,7 @@ def main():
             detection(videoInput, roadType)
         elif event == "TEST DETECTION":
             print(roadType)
-            testInput = cv2.VideoCapture('testRecs/night2.mp4')
+            testInput = cv2.VideoCapture('testRecs/tpd1_pedestrian.mp4')
             testDetection(testInput, roadType)
         elif event == "city":
             roadType = "city"
