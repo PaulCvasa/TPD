@@ -44,8 +44,7 @@ prompt in the TPD folder and running this command:
 py -m pip install -r requirements.txt
 
 • Download the Tensorflow API from the Google Drive shared folder:
-https://drive.google.com/file/d/1DUmediZ2HRg4sQrkxwJcq000byVsJqGV/view?
-usp=sharing
+https://drive.google.com/file/d/1DUmediZ2HRg4sQrkxwJcq000byVsJqGV/view?usp=sharing
 
 • Extract the tensorflow folder in the same directory as the TPD.py script
 
